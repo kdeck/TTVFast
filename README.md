@@ -11,10 +11,10 @@ The C version of the code is in the directory c_version, the Fortran version is 
 
 Citations
 =======
-If you use this code, please cite Deck, Agol, Holman, & Nesvorny (2014), arXiv: , ApJ:
+If you use this code, please cite Deck, Agol, Holman, & Nesvorny (2014), arXiv:1403.1895 , submitted to ApJ.
 
 
 
 Please check back for updates to ensure that you are using the latest version.
 
--Katherine Deck
+-Katherine Deck, Eric Agol, Matt Holman, & David Nesvorny
