@@ -1,4 +1,4 @@
-/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny, 2014 */
+/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny, 2014,  ApJ, 787, 132, arXiv:1403.1895 */
 
 // This is the sample program showing how TTVFast is called.
 
@@ -71,10 +71,10 @@ int main(int argc, char **argv)
   /*Planet Mass/Stellar Mass, Period, Eccentricity, Inclination, Longnode, Arg Peri, Mean Anomaly */
   while(planet < nplanets){
     fscanf(dynam_param_file, "%lf %lf %lf %lf %lf %lf %lf",&p[planet*7+2],&p[planet*7+3],&p[planet*7+4],&p[planet*7+5],&p[planet*7+6],&p[planet*7+7],&p[planet*7+8]);
-    n_events += ceil((total-Time)/p[planet*7+3]+1); /* large enough to fit all the transits calculated by the code*/
     planet++;
   }
   fclose(dynam_param_file);
+  n_events = 5000; /*HARDWIRED, see README. you may need to change this depending on the number of planets and their orbital periods. */
   /* create structure to hold transit calculations*/
   CalcTransit *model;
   model = (CalcTransit*) calloc(n_events,sizeof(CalcTransit));

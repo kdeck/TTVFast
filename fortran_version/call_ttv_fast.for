@@ -2,7 +2,7 @@
 C This routine gives an example of calling the Fortran
 C version of TTVFast, ttv_fast.for.
 C If you make use of this code, please cite:
-C Deck, Agol, Holman & Nesvorny, 2014, arXiv:1234.5678
+C Deck, Agol, Holman & Nesvorny, 2014, ApJ, 787, 132, arXiv:1403.1895
 
       implicit none
       include 'nbody_include.for'

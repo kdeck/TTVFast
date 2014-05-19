@@ -1,4 +1,4 @@
-/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny, 2014 */
+/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny, 2014,  ApJ, 787, 132, arXiv:1403.1895 */
 
 //This file holds all the auxiliary files for the integration, including the Kepler step, the kick step, transit time solver employing Newton's method, transit time finder employing the bisection method, the symplectic corrector sub routines, etc.
 

@@ -1,4 +1,10 @@
-/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny, 2014 */
+/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny, 2014,  ApJ, 787, 132, arXiv:1403.1895 */
+
+***As of May 19, 2014, the sample program run_TTVFast.c has a small bug fixed. This only affected the code when cartesian input was used. In this case, the amount of memory allocated for the structure which holds the calculated transit times, durations, etc. was not correct. This was because the memory allocated depended on the orbital periods of the planets (roughly, the number of transits ~ Sum over the planets (total time/ orbital period). with cartesian input, the orbital period is not supplied).
+
+Now, n_events is hardwired to a large number to avoid this problem. see below. 
+-----------------------------
+
 TTVFast.c - this is the main piece of code.
 Auxiliary files are: ttv-map-jacobi.c, transit.h, myintegrator.h, kepcart2.c, machine-epsilon.c
 
@@ -26,7 +32,10 @@ G is in units of AU^3/day^2/M_sun, all masses are in units of M_sun, the Period 
 
 (5) Number of planets, transiting or not.
 
-(6) structure to hold calculated transit information. This structure is a type called CalcTransit, defined in transit.h. This is allocated memory to hold information (transit time, rksy, vsky, etc.) for n_events = Sum (over all planets) ceiling[1.0+(tfinal-t0)/period of planet], passed to TTVFast, and filled. If there are fewer transits which actually occur during the integration, there will be unfilled spots in the CalcTransit structure. We recommend setting a DEFAULT value (as in the sample program, discussed below) so that it is obvious which spots were never filled by TTVFast.
+(6) structure to hold calculated transit information. This structure is a type called CalcTransit, defined in transit.h. This is allocated memory to hold information (transit time, rksy, vsky, etc.) for n_events = large number. By default this is set to 5000 - depending on how many planets you are studying and their orbital periods, this may need to be changed! If this number is not large enough to hold all transits determined by the code, you will get an error!
+
+
+Note that if there are fewer transits which actually occur during the integration, there will be unfilled spots in the CalcTransit structure. We recommend setting a DEFAULT value (as in the sample program, discussed below) so that it is obvious which spots were never filled by TTVFast.
 
 (7) The RV_model structure: also defined in transit.h. IF RV INFORMATION IS NOT DESIRED, the NULL POINTER should be passed. If RV information is desired, this should be a structure of RV_count spots with the times of RV observations. 
 

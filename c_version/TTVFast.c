@@ -1,5 +1,5 @@
 /*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny,
-2014 */
+2014  ApJ, 787, 132, arXiv:1403.1895 */
 
 // Main TTVFast file, which takes in the initial conditions, masses, G, timestep, t0, total amount of time, number of planets, number of RV measurements, size of Transit structure, and the RV and Transit structures. This is where the integration is formed & the transit times, rsky & vsky at transit, and RV at an observation time are calculated. Note that things called "helio" or "heliocentric" really should be "astrocentric". 
 

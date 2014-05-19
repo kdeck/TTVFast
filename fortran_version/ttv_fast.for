@@ -4,7 +4,7 @@ C This is the Fortran version of TTVFast.
 C
 C If you make use of this code, please cite:
 C
-C Deck, Agol, Holman & Nesvorny, 2014, arXiv:1234.5678
+C Deck, Agol, Holman & Nesvorny, 2014, ApJ, 787, 132, arXiv:1403.1895
 C
 C 1) Description:
 C This subroutine carries out a fast, approximate computation
