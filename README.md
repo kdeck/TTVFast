@@ -10,7 +10,7 @@ Available Versions
 The C version of the code is in the directory c_version, the Fortran version is in fortran_version. Both versions have specific README files.
 
 There is a Julia interface in the directory jl_version.  First, you must create libttvfast.so (e.g., "cd jl_version; source compile_libttvfast.cmd" on Linux).  Once you've done this, start julia and type
-'include("TTVFast_demo.jl")' to see an example of calling ttvfast and accessing the outputs from Julia.
+'include("demo_julia.jl")' to see an example of calling ttvfast and accessing the outputs from Julia.  There's another example of using the same input file foramts as TTVFast.
 
 Citations
 =======
