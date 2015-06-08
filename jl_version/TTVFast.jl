@@ -1,8 +1,8 @@
 module TTVFast
 
 function __init__()
-  const global LIBTTV = find_library(["libttvfast.so"],["/usr/local/lib",".","../c_version/"])
-  const global ttvfast_NA_DEFAULT = convert(Cdouble,-2.0); # /* value for transit information that is not determined by TTVFast*/
+  const global LIBTTV = find_library(["libttvfast.so"],[".","/usr/local/lib","../c_version/"])
+  const global ttvfast_NA_DEFAULT = convert(Cdouble,-2.0); # value for transit information that is not determined by TTVFast
   const global TTVFAST_INITIALIZED = true
 end
 
@@ -68,27 +68,21 @@ end
 
 function get_event(data::ttvfast_outputs_type, i::Integer)  
   @assert( (i>=1) && (i<=data.max_num_events) )
-  # What not use data?
   pointer_to_array(data.transit_workspace,data.max_num_events)[i]
-  #pointer_to_array(ttvfast_output.transit_workspace,data.max_num_events)[i]
 end
 
 function get_rv(data::ttvfast_outputs_type, i::Integer, convert_to_mps::Bool=true)  
   @assert( (i>=1) && (i<=data.num_rv_obs) )
-  # What not use data?
   rv = pointer_to_array(data.rv_workspace,data.num_rv_obs)[i].RV
-  #pointer_to_array(ttvfast_output.rv_workspace,data.num_rv_obs)[i].RV
   if(convert_to_mps)
-    rv *= 1731456.84
+    rv *= 1731456.84  # should check if you care about precission
   end
   return rv
 end
 
 function get_rv_time(data::ttvfast_outputs_type, i::Integer)  
   @assert( (i>=1) && (i<=data.num_rv_obs) )
-  # What not use data?
   pointer_to_array(data.rv_workspace,data.num_rv_obs)[i].time
-  #pointer_to_array(ttvfast_output.rv_workspace,data.num_rv_obs)[i].time
 end
 
 function ttvfast_inputs_type(p::Array{Cdouble,1} ; inflag::Integer = 0, t_start::Real=0., t_stop::Real=4*365.2425, dt::Real = 0.02)
@@ -106,8 +100,7 @@ function ttvfast!(in::ttvfast_inputs_type, out::ttvfast_outputs_type)
   # void TTVFast(double *params,double dt, double Time, double total,int n_planets, CalcTransit *transit, CalcRV *RV_struct,int n,int m, int input);
   ccall( (:TTVFast, LIBTTV ), Void, (Ptr{Void},Cdouble,Cdouble,Cdouble,Cint,Ptr{Void},Ptr{Void},Cint,Cint,Cint,),
                   in.param,in.time_step,in.t_start,in.t_stop,in.num_planets,
-                  #out.transit_workspace,out.rv_workspace,out.num_rv_obs,out.max_num_events,in.input_flag )
-                  convert(Ptr{Void},out.transit_workspace),convert(Ptr{Void},out.rv_workspace),out.num_rv_obs,out.max_num_events,in.input_flag )
+                  out.transit_workspace,out.rv_workspace,out.num_rv_obs,out.max_num_events,in.input_flag )
 end
 
 end # Module TTVFast
