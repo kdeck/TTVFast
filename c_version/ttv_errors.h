@@ -16,4 +16,16 @@ typedef enum {
                              //   Likely need a smaller dt.')
 } status_t;
 
+// Helper to check that the status variable is ok
+#define __status_error(status) (status) != STATUS_OK
+
+// Convenience function to check the error, and return early if it's not
+// STATUS_OK. There must be a local variable called `status`.
+#define __assert_status() \
+    if ((__status_error(status))) return status
+
+// Another convenience function to wrap a function call
+#define check_status(X) \
+    status = (X); __assert_status()
+
 #endif // TTV_ERRORS_H_
