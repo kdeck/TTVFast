@@ -50,14 +50,18 @@ double machine_epsilon;
 #include "kepcart2.c"
 #include "machine-epsilon.c"
 
+/* Function declarations */
+void read_jacobi_planet_elements(double *params);
+void read_helio_planet_elements(double *params);
+void read_helio_cartesian_params(double *params);
+
 void TTVFast(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag)
 {
   n_planets=n_plan;
-  int  planet;
   int i, j;
   j=0;
   void jacobi_heliocentric(PhaseState *jacobi, PhaseState *helio, double GMsun, double *GM);
-  double dot0,dot1,dot2,rskyA,rskyB,vprojA,vprojB,rsky,vproj,velocity,new_dt;
+  double dot1,dot2,rskyA,rskyB,vprojA,vprojB,rsky,vproj,velocity,new_dt;
   double compute_RV(PhaseState *ps);
   double compute_deriv(PhaseState ps,int planet);
   int RV_count = 0;
@@ -241,11 +245,9 @@ void TTVFast(double *params,double dt, double Time, double total,int n_plan,Calc
 
 
 
-read_jacobi_planet_elements(params)
-     double *params;
+void read_jacobi_planet_elements(double *params)
 {
   int planet;
-  double solar_mass, GMplanet;
   double Getatmp, Getatmp0;
   double period,e,incl,longnode,argperi,MeanAnom;
   double a;
@@ -296,11 +298,9 @@ read_jacobi_planet_elements(params)
 
 
 
-read_helio_planet_elements(params)
-     double *params;
+void read_helio_planet_elements(double *params)
 {
   int planet;
-  double solar_mass, GMplanet;
   double Getatmp, Getatmp0;
   double period,e,incl,longnode,argperi,MeanAnom;
   double a;
@@ -354,11 +354,9 @@ read_helio_planet_elements(params)
 }
 
 
-read_helio_cartesian_params(params)
-double *params;
+void read_helio_cartesian_params(double *params)
 {
   int planet;
-  double solar_mass, GMplanet;
   double Getatmp, Getatmp0;
   double a,r,vs,u;
   void heliocentric_jacobi(PhaseState *helio, PhaseState *jacobi, double GMsun, double *GM);

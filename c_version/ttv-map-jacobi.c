@@ -2,6 +2,11 @@
 
 //This file holds all the auxiliary files for the integration, including the Kepler step, the kick step, transit time solver employing Newton's method, transit time finder employing the bisection method, the symplectic corrector sub routines, etc.
 
+/* Forward declarations */
+void Z(PhaseState p[], double a, double b);
+void copy_system(PhaseState p1[], PhaseState p2[]);
+void copy_state(PhaseState *s1,  PhaseState *s2);
+
 int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
 {
   
@@ -9,9 +14,7 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   double dM, x, sx, cx, f, fp, fpp, fppp, dx;
   double fdot, g, gdot;
   double sx2, cx2, x2;
-  double xx, yy, xx1, yy1, omx, h;
-  double k0x, k0y, k1x, k1y, k2x, k2y, k3y;
-  double ecosE, esinE;
+  double ecosE;
   int count;
   r0 = sqrt(s0->x*s0->x + s0->y*s0->y + s0->z*s0->z);
 
@@ -101,12 +104,12 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   s->yd = fdot*s0->y + gdot*s0->yd;
   s->zd = fdot*s0->z + gdot*s0->zd;
 
+  return 0;
 }
 
 double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState *s)
 {
-    double y,y2,sy2,sy,test;
-  double ecc,transitM,eprior;
+  double transitM;
   double  a, n,r0, ecosE0, esinE0,u,v0s;
   double  x, sx, cx, fp, fp2, dx;
   double fdot, g, gdot,f;
@@ -287,20 +290,13 @@ double dot_product(double y, double aOverR, double esinE0, double ecosE0, double
 
 void nbody_kicks(PhaseState p[], double dt)
 {
-  Vector FF[MAX_N_PLANETS], GG[MAX_N_PLANETS], acc_tp;
+  Vector FF[MAX_N_PLANETS], GG[MAX_N_PLANETS];
   Vector tmp[MAX_N_PLANETS], h[MAX_N_PLANETS], XX;
-  double GMsun_over_r3[MAX_N_PLANETS], rp2, dx, dy, dz, r2, rij2, rij5;
+  double GMsun_over_r3[MAX_N_PLANETS], rp2, dx, dy, dz, r2, rij2;
   double q, q1, fq;
-  double f0, fi, fij, fijm, fr;
+  double f0, fij, fijm;
   double sx, sy, sz, tx, ty, tz;
-  double indirectx, indirecty, indirectz, over_GMsun;
-  double constant;
   int i, j;
-  double qb0, qb1, qb2, qb3;
-  double c, c1;
-
-  double a0, a11, a22, a33, a12, a13, a23, a21, a32, a31, b01, b02, b03, b12, b13, b23;
-  double x1, x2, x3;
 
   sx = 0.0; sy = 0.0; sz = 0.0;
   for(i=0; i<n_planets; i++) {
@@ -362,10 +358,6 @@ double corr_Chambers,coeffb1,coeffb2,coeffa1,coeffa2,TOa1,TOa2,TOb1,TOb2,alpha,b
 
 void real_to_mapTO(PhaseState rp[], PhaseState p[])
 {
-
-  void Z(PhaseState p[], double a, double b);
-  void copy_system(PhaseState p1[], PhaseState p2[]);
-
   copy_system(rp, p);
 
   Z(p, TOa2, TOb2);
@@ -376,9 +368,6 @@ void real_to_mapTO(PhaseState rp[], PhaseState p[])
 
 void map_to_realTO(PhaseState p[], PhaseState rp[])
 {
-
-  void Z(PhaseState p[],  double a, double b);
-  void copy_system(PhaseState p1[], PhaseState p2[]);
 
   copy_system(p,rp);
 
@@ -409,7 +398,6 @@ void A(PhaseState p[],  double dt)
 {
   PhaseState tmp;
   int planet;
-  void copy_state(PhaseState *s1,  PhaseState *s2);
 
   for(planet=0; planet<n_planets; planet++) {
     kepler_step(kc[planet], dt, &p[planet], &tmp,planet);
