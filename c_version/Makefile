@@ -2,7 +2,7 @@ RUN := run_TTVFast
 SOURCES := $(wildcard *.c)
 HEADERS := $(wildcard *.h)
 
-all: test
+all: $(RUN)
 
 $(RUN): $(SOURCES) $(HEADERS)
 	gcc -o $@ run_TTVFast.c TTVFast.c -lm -O3  -Wall -Wextra
