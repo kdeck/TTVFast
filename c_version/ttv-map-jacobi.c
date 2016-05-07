@@ -2,12 +2,14 @@
 
 //This file holds all the auxiliary files for the integration, including the Kepler step, the kick step, transit time solver employing Newton's method, transit time finder employing the bisection method, the symplectic corrector sub routines, etc.
 
+#include "ttv_errors.h"
+
 /* Forward declarations */
-void Z(PhaseState p[], double a, double b);
+status_t Z(PhaseState p[], double a, double b);
 void copy_system(PhaseState p1[], PhaseState p2[]);
 void copy_state(PhaseState *s1,  PhaseState *s2);
 
-int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
+status_t kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
 {
   
   double r0, v0s, u, a, n, ecosE0, esinE0;
@@ -23,8 +25,7 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   a = 1.0/(2.0/r0 - v0s/gm);
 
   if(a<0.0) {
-    printf("hyperbolic orbit %lf\n", a);
-    exit(-1);
+      return STATUS_HYPERBOLIC_ORBIT;
   }
 
   n = sqrt(gm/(a*a*a));
@@ -77,8 +78,7 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   }
 
   if(count==MAX_ITER){
-    printf("Kepler step not converging in MAX_ITER. Likely need a smaller dt\n");
-    exit(-1);
+    return STATUS_NON_CONVERGING;
   }
 
   guess[planet][0]=guess[planet][1];
@@ -104,7 +104,7 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   s->yd = fdot*s0->y + gdot*s0->yd;
   s->zd = fdot*s0->z + gdot*s0->zd;
 
-  return 0;
+  return STATUS_OK;
 }
 
 double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState *s)
@@ -356,24 +356,29 @@ void nbody_kicks(PhaseState p[], double dt)
 double corr_Chambers,coeffb1,coeffb2,coeffa1,coeffa2,TOa1,TOa2,TOb1,TOb2,alpha,beta,btil1,btil2,atil1,atil2,ssq,corr_alpha,corr_beta,FOa1,FOa2,FOa3,FOa4,FOb1,FOb2,FOb3,FOb4,SOa1,SOa2,SOa3,SOa4,SOa5,SOa6,SOb1,SOb2,SOb3,SOb4,SOb5,SOb6;
 
 
-void real_to_mapTO(PhaseState rp[], PhaseState p[])
+status_t real_to_mapTO(PhaseState rp[], PhaseState p[])
 {
-  copy_system(rp, p);
+    status_t status;
+    copy_system(rp, p);
 
-  Z(p, TOa2, TOb2);
-  Z(p,  TOa1, TOb1);
+    check_status(Z(p, TOa2, TOb2));
+    check_status(Z(p,  TOa1, TOb1));
 
+    return STATUS_OK;
 }
 
 
-void map_to_realTO(PhaseState p[], PhaseState rp[])
+status_t map_to_realTO(PhaseState p[], PhaseState rp[])
 {
+    status_t status;
 
-  copy_system(p,rp);
+    copy_system(p,rp);
 
-  Z(rp,  TOa1, -TOb1);
-  Z(rp,  TOa2, -TOb2);
- }
+    check_status(Z(rp,  TOa1, -TOb1));
+    check_status(Z(rp,  TOa2, -TOb2));
+
+    return STATUS_OK;
+}
 
 void compute_corrector_coefficientsTO(double dt)
 {
@@ -394,33 +399,42 @@ void compute_corrector_coefficientsTO(double dt)
 
 
 
-void A(PhaseState p[],  double dt)
+status_t A(PhaseState p[],  double dt)
 {
   PhaseState tmp;
   int planet;
 
+  status_t status;
   for(planet=0; planet<n_planets; planet++) {
-    kepler_step(kc[planet], dt, &p[planet], &tmp,planet);
-    copy_state(&tmp, &p[planet]);
+      check_status(kepler_step(kc[planet], dt, &p[planet], &tmp,planet));
+      copy_state(&tmp, &p[planet]);
   }
+  return STATUS_OK;
 }
 
-void B(PhaseState p[], double dt)
+status_t B(PhaseState p[], double dt)
 {
   nbody_kicks(p, dt);  
+  return STATUS_OK;
 }
 
-void C(PhaseState p[], double a, double b)
+status_t C(PhaseState p[], double a, double b)
 {
-  A(p, -a);
-  B(p, b);
-  A(p, a);
+    status_t status;
+
+    check_status(A(p, -a));
+    check_status(B(p, b));
+    check_status(A(p, a));
+    return STATUS_OK;
 }
 
-void Z(PhaseState p[], double a, double b)
+status_t Z(PhaseState p[], double a, double b)
 {
-  C(p, -a, -b);
-  C(p, a, b);
+    status_t status;
+
+    check_status(C(p, -a, -b));
+    check_status(C(p, a, b));
+    return STATUS_OK;
 }
 
 void copy_state(PhaseState *s1,  PhaseState *s2)
