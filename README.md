@@ -1,9 +1,6 @@
 TTVFast
 =======
 
-*This is a python compatability fork of TTVFast for use with
-[ttvfast-python](https://github.com/mindriot101/ttvfast-python)*
-
 TTVFast efficiently calculates transit times for n-planet systems and the corresponding radial velocities.
 
 
