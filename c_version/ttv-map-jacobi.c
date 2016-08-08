@@ -115,6 +115,7 @@ double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState 
   double fdot, g, gdot,f;
   double sx2, cx2, x2;
   double aOverR,dfdz,dgdz,dfdotdz,dgdotdz,dotproduct,dotproductderiv,rsquared,vsquared,xdotv;
+  int count;
 
   r0 = sqrt(s0->x*s0->x + s0->y*s0->y + s0->z*s0->z);
   v0s = s0->xd*s0->xd + s0->yd*s0->yd + s0->zd*s0->zd;
@@ -132,6 +133,7 @@ double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState 
 
   /*Initial Guess */
   x = n*dt/2.0;
+  count = 0;
   do{
     x2 = x/2.0;
     sx2 = sin(x2); cx2 = cos(x2);
@@ -156,7 +158,9 @@ double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState 
 
     x += dx;
 
-  }while(fabs(dx)> sqrt(TOLERANCE));
+    count++;
+
+  }while((fabs(dx)> sqrt(TOLERANCE)) && (count < MAX_ITER));
   /* Now update state */
   x2 = x/2.0;
   sx2 = sin(x2); cx2 = cos(x2);
