@@ -139,23 +139,23 @@ status_t TTVFast_main(double *params,double dt, double Time, double total,int n_
 
     if(j <RV_count){
       RVTime = Time+dt2;
+
+      while(RVTime>(RV_struct+j)->time && RVTime-dt<(RV_struct+j)->time){ /* LMW 2016 Nov: This conditional has been updated from "if" --> "while" to account for multiple RV measurements in a single time step */
+    if(RVTime-(RV_struct+j)->time > (RV_struct+j)->time-(RVTime-dt)){
+      copy_system(p_tmp,p_RV);
+      new_dt= (RV_struct+j)->time-(RVTime-dt);
+      A(p_RV,new_dt);
+      velocity = compute_RV(p_RV);
+      (RV_struct+j)->RV =velocity;
       
-      if(RVTime>(RV_struct+j)->time && RVTime-dt<(RV_struct+j)->time){
-	if(RVTime-(RV_struct+j)->time > (RV_struct+j)->time-(RVTime-dt)){
-	  copy_system(p_tmp,p_RV);
-	  new_dt= (RV_struct+j)->time-(RVTime-dt);
-	  A(p_RV,new_dt);
-	  velocity = compute_RV(p_RV);
-	  (RV_struct+j)->RV =velocity;
-	  
-	}else{
-	  copy_system(p,p_RV);
-	  new_dt= (RV_struct+j)->time-RVTime;
-	  A(p_RV,new_dt);
-	  velocity = compute_RV(p_RV);
-	  (RV_struct+j)->RV =velocity;
-	}
-	j++;
+    }else{
+      copy_system(p,p_RV);
+      new_dt= (RV_struct+j)->time-RVTime;
+      A(p_RV,new_dt);
+      velocity = compute_RV(p_RV);
+      (RV_struct+j)->RV =velocity;
+    }
+    j++;
       }
     }
     
