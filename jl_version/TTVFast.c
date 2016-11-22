@@ -1,8 +1,10 @@
-# *If you make use of this code, please cite Deck, Agol, Holman & Nesvorny,
-# 2014  ApJ, 787, 132, arXiv:1403.1895 */
+/*If you make use of this code, please cite Deck, Agol, Holman & Nesvorny,
+2014  ApJ, 787, 132, arXiv:1403.1895 */
 
-#/ Main TTVFast file, which takes in the initial conditions, masses, G, timestep, t0, total amount of time, number of planets, number of RV measurements, size of Transit structure, and the RV and Transit structures. This is where the integration is formed & the transit times, rsky & vsky at transit, and RV at an observation time are calculated. Note that things called "helio" or "heliocentric" really should be "astrocentric". 
+// Main TTVFast file, which takes in the initial conditions, masses, G, timestep, t0, total amount of time, number of planets, number of RV measurements, size of Transit structure, and the RV and Transit structures. This is where the integration is formed & the transit times, rsky & vsky at transit, and RV at an observation time are calculated. Note that things called "helio" or "heliocentric" really should be "astrocentric". 
 
+#define PI 3.14159265358979323846
+#define TWOPI 6.283185307179586476925287
 #define MAX_N_PLANETS 9
 #include"myintegrator.h"
 #include"transit.h"
@@ -48,12 +50,11 @@ double machine_epsilon;
 #include "kepcart2.c"
 #include "machine-epsilon.c"
 
-#void TTVFast(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag)
-function TTVFast(Real::params,Real::dt,Real::Time,Real::total,Integer::n_plan,CalcTransit::transit,CalcRV::RV_struct,Integer:nRV,Integer::n_events,Integer::input_flag)
-
+void TTVFast(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag)
+{
   n_planets=n_plan;
-#  int  planet;
-#  int i, j;
+  int  planet;
+  int i, j;
   j=0;
   void jacobi_heliocentric(PhaseState *jacobi, PhaseState *helio, double GMsun, double *GM);
   double dot0,dot1,dot2,rskyA,rskyB,vprojA,vprojB,rsky,vproj,velocity,new_dt;
@@ -64,24 +65,24 @@ function TTVFast(Real::params,Real::dt,Real::Time,Real::total,Integer::n_plan,Ca
   double deriv;
   double  dt2 = dt/2.0;
 
-  if (RV_struct !=NULL)
-    RV_count = nRV
-  end
+  if(RV_struct !=NULL){
+    RV_count = nRV;
+  }
 
-#  machine_epsilon = determine_machine_epsilon();
-  if (input_flag ==0)
+  machine_epsilon = determine_machine_epsilon();
+  if(input_flag ==0){
     read_jacobi_planet_elements(params);
-  end
-  if (input_flag ==1)
+  }
+  if(input_flag ==1){
     read_helio_planet_elements(params);
-  end
-  if (input_flag ==2)
+  }
+  if(input_flag ==2){
     read_helio_cartesian_params(params);
-  end
-  if (input_flag !=0 && input_flag !=1 && input_flag !=2)
+  }
+  if(input_flag !=0 && input_flag !=1 && input_flag !=2){
     printf("Input flag must be 0,1, or 2. \n");
     exit(-1);
-  end
+  }
   
   copy_system(p, rp);
   compute_corrector_coefficientsTO(dt);
@@ -152,7 +153,7 @@ function TTVFast(Real::params,Real::dt,Real::Time,Real::total,Integer::n_plan,Ca
 
 	  deriv = compute_deriv(temporary,tplanet);
 
-	  if(deriv < 0.0 || temporary.z <0.0 || dotA < TimeB-pi/mm[tplanet] || dotA > TimeA+pi/mm[tplanet]){ /* was the right root found?*/
+	  if(deriv < 0.0 || temporary.z <0.0 || dotA < TimeB-PI/mm[tplanet] || dotA > TimeA+PI/mm[tplanet]){ /* was the right root found?*/
 	    dotA= TimeA+bisection(kc_helio[tplanet],&helioAhead[tplanet],&helioBehind[tplanet],&temporary);
 	  }
 	  
@@ -163,7 +164,7 @@ function TTVFast(Real::params,Real::dt,Real::Time,Real::total,Integer::n_plan,Ca
 
 	  deriv = compute_deriv(temporary,tplanet);	  
 
-	  if(deriv < 0.0 || temporary.z <0.0 || dotB < TimeB-pi/mm[tplanet] || dotB > TimeA+pi/mm[tplanet]){ /* was the right root found?*/
+	  if(deriv < 0.0 || temporary.z <0.0 || dotB < TimeB-PI/mm[tplanet] || dotB > TimeA+PI/mm[tplanet]){ /* was the right root found?*/
 	    dotB= TimeB+bisection(kc_helio[tplanet],&helioBehind[tplanet],&helioAhead[tplanet],&temporary);
 	  }
 	  
@@ -187,7 +188,7 @@ function TTVFast(Real::params,Real::dt,Real::Time,Real::total,Integer::n_plan,Ca
 	  
 	  deriv = compute_deriv(temporary,tplanet);	  
 	  
-	  if(deriv < 0.0 || temporary.z <0.0 || dotB < TimeB-pi/mm[tplanet] || dotB > TimeA+pi/mm[tplanet]){ /* was the right root found?*/
+	  if(deriv < 0.0 || temporary.z <0.0 || dotB < TimeB-PI/mm[tplanet] || dotB > TimeA+PI/mm[tplanet]){ /* was the right root found?*/
 	    dotB= TimeB+bisection(kc_helio[tplanet],&helioBehind[tplanet],&helioAhead[tplanet],&temporary);
 	  }
 	  
@@ -198,7 +199,7 @@ function TTVFast(Real::params,Real::dt,Real::Time,Real::total,Integer::n_plan,Ca
 	  
 	  deriv = compute_deriv(temporary,tplanet);	  
 	  
-	  if(deriv < 0.0 || temporary.z <0.0 || dotA < TimeB-pi/mm[tplanet] || dotA > TimeA+pi/mm[tplanet]){ /* was the right root found?*/
+	  if(deriv < 0.0 || temporary.z <0.0 || dotA < TimeB-PI/mm[tplanet] || dotA > TimeA+PI/mm[tplanet]){ /* was the right root found?*/
 	    dotA= TimeA+bisection(kc_helio[tplanet],&helioAhead[tplanet],&helioBehind[tplanet],&temporary);
 	  }
 	  
@@ -274,12 +275,12 @@ read_jacobi_planet_elements(params)
     longnode = params[planet*7+6];
     argperi = params[planet*7+7];
     MeanAnom = params[planet*7+8];
-    mm[planet] = 2*pi/period;
+    mm[planet] = 2*PI/period;
     a = pow(mm[planet]*mm[planet]/kc[planet],-1.0/3.0);
-    incl *= pi/180.0;
-    longnode *= pi/180.0;
-    argperi *= pi/180.0;
-    MeanAnom *=pi/180.0;
+    incl *= PI/180.0;
+    longnode *= PI/180.0;
+    argperi *= PI/180.0;
+    MeanAnom *=PI/180.0;
     guess[planet][0] = mm[planet]*dt;
     guess[planet][1] = mm[planet]*dt;
     guess[planet][2] = mm[planet]*dt;
@@ -295,16 +296,16 @@ read_jacobi_planet_elements(params)
 
 
 
-function read_helio_planet_elements(Real::params)
-#     double *params;
-
-#  int planet;
-#  double solar_mass, GMplanet;
-#  double Getatmp, Getatmp0;
-#  double period,e,incl,longnode,argperi,MeanAnom;
-#  double a;
-#  void heliocentric_jacobi(PhaseState *helio, PhaseState *jacobi, double GMsun, double *GM);
-  Vector{PhaseState}::helio #[MAX_N_PLANETS];
+read_helio_planet_elements(params)
+     double *params;
+{
+  int planet;
+  double solar_mass, GMplanet;
+  double Getatmp, Getatmp0;
+  double period,e,incl,longnode,argperi,MeanAnom;
+  double a;
+  void heliocentric_jacobi(PhaseState *helio, PhaseState *jacobi, double GMsun, double *GM);
+  PhaseState helio[MAX_N_PLANETS];
   G = params[0];
   GMsun = params[1]*G;
   
@@ -312,7 +313,7 @@ function read_helio_planet_elements(Real::params)
 
   Getatmp = GMsun;
 
-  while (planet < n_planets)
+  while(planet < n_planets){
     GM[planet] = params[planet*7+2];
     GM[planet] *= G;
     
@@ -326,31 +327,31 @@ function read_helio_planet_elements(Real::params)
     kc_helio[planet] = GMsun+GM[planet];
     m_eta[planet] = GM[planet]/Geta[planet];
     period = params[planet*7+3];
-    ecc = params[planet*7+4];
+    e = params[planet*7+4];
     incl = params[planet*7+5];
     longnode = params[planet*7+6];
     argperi = params[planet*7+7];
     MeanAnom = params[planet*7+8];
-    mm[planet] = 2*pi/period;
+    mm[planet] = 2*PI/period;
     a = pow(mm[planet]*mm[planet]/kc[planet],-1.0/3.0);
-    incl *= pi/180.0;
-    longnode *= pi/180.0;
-    argperi *= pi/180.0;
-    MeanAnom *=pi/180.0;
+    incl *= PI/180.0;
+    longnode *= PI/180.0;
+    argperi *= PI/180.0;
+    MeanAnom *=PI/180.0;
     guess[planet][0] = mm[planet]*dt;
     guess[planet][1] = mm[planet]*dt;
     guess[planet][2] = mm[planet]*dt;
-    cartesian(kc_helio[planet],a,ecc,incl,longnode,argperi,MeanAnom,&helio[planet]);
+    cartesian(kc_helio[planet],a,e,incl,longnode,argperi,MeanAnom,&helio[planet]);
     planet += 1;
 
-    if (planet > MAX_N_PLANETS)
+    if(planet > MAX_N_PLANETS) {
       printf("too many planets: %d\n", planet);
       exit(-1);
-    end
-  end
+    }
+  }
   heliocentric_jacobi(helio,p,GMsun,GM);
-  return
-end
+
+}
 
 
 read_helio_cartesian_params(params)
@@ -450,14 +451,14 @@ double compute_deriv(PhaseState s, int planet)
   return(deriv);
 }
 
-function compute_RV(PhaseState::ps)
-
+double compute_RV(PhaseState *ps)
+{
   void jacobi_heliocentric(PhaseState *jacobiS, PhaseState *helioS, double GMsunS, double *GMS);
-  Vector{PhaseState}::sun,helio #[MAX_N_PLANETS];
+  PhaseState sun,helio[MAX_N_PLANETS];
   jacobi_heliocentric(ps,helio,GMsun,GM);
 
   int i;
-  Real::mtotal=GMsun;
+  double mtotal=GMsun;
   sun.x = 0.0; sun.y = 0.0; sun.z = 0.0;
   sun.xd = 0.0; sun.yd = 0.0; sun.zd = 0.0;
   for(i=0;i<n_planets;i++){   

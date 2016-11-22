@@ -22,11 +22,11 @@ nplanets=2;  # hardwired for now
     p[2+7*(i-1)+1] = 0.0001*rand();   # Planet Mass
     p[2+7*(i-1)+2] = 3.0^i; # Period
     p[2+7*(i-1)+3] = rand();  # Eccentricity
-    p[2+7*(i-1)+4] = pi/2;    # Inclination
-    p[2+7*(i-1)+5] = 2pi*rand(); # Longitude of Ascending Node
-    p[2+7*(i-1)+6] = 2pi*rand(); # Argument of Pericenter
-    p[2+7*(i-1)+7] = 2pi*rand(); # Mean Anomaly 
-    num_events += iceil( duration/p[2+7*(i-1)+2] +1); # /* large enough to fit all the transits calculated by the code*/
+    p[2+7*(i-1)+4] = 90;    # Inclination
+    p[2+7*(i-1)+5] = 360*rand(); # Longitude of Ascending Node
+    p[2+7*(i-1)+6] = 360*rand(); # Argument of Pericenter
+    p[2+7*(i-1)+7] = 360*rand(); # Mean Anomaly 
+    num_events += ceil(Integer, duration/p[2+7*(i-1)+2] +1); # /* large enough to fit all the transits calculated by the code*/
   end
 
 ttvfast_input = ttvfast_inputs_type(p, t_start=t_start, t_stop=t_stop, dt=dt)
@@ -34,7 +34,7 @@ ttvfast_input = ttvfast_inputs_type(p, t_start=t_start, t_stop=t_stop, dt=dt)
 incl_rvs = true  # Make sure first rv_time is _after_ t_start+dt/2 or else won't get any RV outputs
 if incl_rvs
   num_rvs = 100
-  rv_times = linspace(t_start+0.501*dt,t_stop, num_rvs)
+  rv_times = collect(linspace(t_start+0.501*dt,t_stop, num_rvs))
   ttvfast_output = ttvfast_outputs_type(num_events ,rv_times)
 else
   ttvfast_output = ttvfast_outputs_type(num_events)
