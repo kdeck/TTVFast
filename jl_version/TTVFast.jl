@@ -1,7 +1,8 @@
 module TTVFast
 
 function __init__()
-  const global LIBTTV = find_library(["libttvfast.so"],[".","/usr/local/lib","../c_version/"])
+#  const global LIBTTV = Libdl.find_library(["libttvfast.so"],[".","/usr/local/lib","../c_version/"])
+  const global LIBTTV = Libdl.find_library(["/Users/ericagol/Software/TTVFast/jl_version/libttvfast.so"],["/Users/ericagol/Software/TTVFast/jl_version/","/usr/local/lib","/Users/ericagol/Software/TTVFast/c_version/"])
   const global ttvfast_NA_DEFAULT = convert(Cdouble,-2.0); # value for transit information that is not determined by TTVFast
   const global TTVFAST_INITIALIZED = true
 end
@@ -45,8 +46,8 @@ end
 function ttvfast_outputs_type(nevents::Integer, rv_times::Vector{Float64} = Array(Float64,0))
   @assert(nevents>=1);
   local nrvs = length(rv_times)
-  local transit_workspace = c_calloc(nevents,sizeof(ttvfast_transit_entry)) 
-  local rv_workspace = c_calloc(nrvs,sizeof(ttvfast_RV_entry))
+  local transit_workspace = Libc.calloc(nevents,sizeof(ttvfast_transit_entry)) 
+  local rv_workspace = Libc.calloc(nrvs,sizeof(ttvfast_RV_entry))
   @assert(transit_workspace != C_NULL);
   @assert(rv_workspace != C_NULL);
   for i in 1:nrvs
@@ -57,8 +58,8 @@ end
 
 function free_ttvfast_outputs(data::ttvfast_outputs_type)
   try
-    c_free(data.rv_workspace);
-    c_free(data.transit_workspace);
+    Libc.free(data.rv_workspace);
+    Libc.free(data.transit_workspace);
   catch
     println(STDERR, "# ERROR: Something funky happened while trying to deallocate the space reserved for TTVFast outputs.")
   end
@@ -66,7 +67,7 @@ function free_ttvfast_outputs(data::ttvfast_outputs_type)
   data.num_rv_obs = 0;
 end
 
-function get_event(data::ttvfast_outputs_type, i::Integer)  
+function get_event(data::ttvfast_outputs_type, i::Integer)
   @assert( (i>=1) && (i<=data.max_num_events) )
   pointer_to_array(data.transit_workspace,data.max_num_events)[i]
 end
@@ -75,7 +76,7 @@ function get_rv(data::ttvfast_outputs_type, i::Integer, convert_to_mps::Bool=tru
   @assert( (i>=1) && (i<=data.num_rv_obs) )
   rv = pointer_to_array(data.rv_workspace,data.num_rv_obs)[i].RV
   if(convert_to_mps)
-    rv *= 1731456.84  # should check if you care about precission
+    rv *= 1731456.84  # should check if you care about precision
   end
   return rv
 end

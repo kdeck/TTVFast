@@ -26,7 +26,7 @@ nplanets=2;  # hardwired for now
     p[2+7*(i-1)+5] = 2pi*rand(); # Longitude of Ascending Node
     p[2+7*(i-1)+6] = 2pi*rand(); # Argument of Pericenter
     p[2+7*(i-1)+7] = 2pi*rand(); # Mean Anomaly 
-    num_events += iceil( duration/p[2+7*(i-1)+2] +1); # /* large enough to fit all the transits calculated by the code*/
+    num_events += ceil(Integer, duration/p[2+7*(i-1)+2] +1); # /* large enough to fit all the transits calculated by the code*/
   end
 
 ttvfast_input = ttvfast_inputs_type(p, t_start=t_start, t_stop=t_stop, dt=dt)
