@@ -2,16 +2,21 @@
 
 //This file holds all the auxiliary files for the integration, including the Kepler step, the kick step, transit time solver employing Newton's method, transit time finder employing the bisection method, the symplectic corrector sub routines, etc.
 
-int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
+#include "ttv_errors.h"
+
+/* Forward declarations */
+status_t Z(PhaseState p[], double a, double b);
+void copy_system(PhaseState p1[], PhaseState p2[]);
+void copy_state(PhaseState *s1,  PhaseState *s2);
+
+status_t kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
 {
   
   double r0, v0s, u, a, n, ecosE0, esinE0;
   double dM, x, sx, cx, f, fp, fpp, fppp, dx;
   double fdot, g, gdot;
   double sx2, cx2, x2;
-  double xx, yy, xx1, yy1, omx, h;
-  double k0x, k0y, k1x, k1y, k2x, k2y, k3y;
-  double ecosE, esinE;
+  double ecosE;
   int count;
   r0 = sqrt(s0->x*s0->x + s0->y*s0->y + s0->z*s0->z);
 
@@ -20,8 +25,7 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   a = 1.0/(2.0/r0 - v0s/gm);
 
   if(a<0.0) {
-    printf("hyperbolic orbit %lf\n", a);
-    exit(-1);
+      return STATUS_HYPERBOLIC_ORBIT;
   }
 
   n = sqrt(gm/(a*a*a));
@@ -74,8 +78,7 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   }
 
   if(count==MAX_ITER){
-    printf("Kepler step not converging in MAX_ITER. Likely need a smaller dt\n");
-    exit(-1);
+    return STATUS_NON_CONVERGING;
   }
 
   guess[planet][0]=guess[planet][1];
@@ -101,17 +104,18 @@ int kepler_step(double gm, double dt, PhaseState *s0, PhaseState *s,int planet)
   s->yd = fdot*s0->y + gdot*s0->yd;
   s->zd = fdot*s0->z + gdot*s0->zd;
 
+  return STATUS_OK;
 }
 
 double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState *s)
 {
-    double y,y2,sy2,sy,test;
-  double ecc,transitM,eprior;
+  double transitM;
   double  a, n,r0, ecosE0, esinE0,u,v0s;
   double  x, sx, cx, fp, fp2, dx;
   double fdot, g, gdot,f;
   double sx2, cx2, x2;
   double aOverR,dfdz,dgdz,dfdotdz,dgdotdz,dotproduct,dotproductderiv,rsquared,vsquared,xdotv;
+  int count;
 
   r0 = sqrt(s0->x*s0->x + s0->y*s0->y + s0->z*s0->z);
   v0s = s0->xd*s0->xd + s0->yd*s0->yd + s0->zd*s0->zd;
@@ -129,6 +133,7 @@ double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState 
 
   /*Initial Guess */
   x = n*dt/2.0;
+  count = 0;
   do{
     x2 = x/2.0;
     sx2 = sin(x2); cx2 = cos(x2);
@@ -153,7 +158,9 @@ double kepler_transit_locator(double gm, double dt,  PhaseState *s0, PhaseState 
 
     x += dx;
 
-  }while(fabs(dx)> sqrt(TOLERANCE));
+    count++;
+
+  }while((fabs(dx)> sqrt(TOLERANCE)) && (count < MAX_ITER));
   /* Now update state */
   x2 = x/2.0;
   sx2 = sin(x2); cx2 = cos(x2);
@@ -287,20 +294,13 @@ double dot_product(double y, double aOverR, double esinE0, double ecosE0, double
 
 void nbody_kicks(PhaseState p[], double dt)
 {
-  Vector FF[MAX_N_PLANETS], GG[MAX_N_PLANETS], acc_tp;
+  Vector FF[MAX_N_PLANETS], GG[MAX_N_PLANETS];
   Vector tmp[MAX_N_PLANETS], h[MAX_N_PLANETS], XX;
-  double GMsun_over_r3[MAX_N_PLANETS], rp2, dx, dy, dz, r2, rij2, rij5;
+  double GMsun_over_r3[MAX_N_PLANETS], rp2, dx, dy, dz, r2, rij2;
   double q, q1, fq;
-  double f0, fi, fij, fijm, fr;
+  double f0, fij, fijm;
   double sx, sy, sz, tx, ty, tz;
-  double indirectx, indirecty, indirectz, over_GMsun;
-  double constant;
   int i, j;
-  double qb0, qb1, qb2, qb3;
-  double c, c1;
-
-  double a0, a11, a22, a33, a12, a13, a23, a21, a32, a31, b01, b02, b03, b12, b13, b23;
-  double x1, x2, x3;
 
   sx = 0.0; sy = 0.0; sz = 0.0;
   for(i=0; i<n_planets; i++) {
@@ -360,31 +360,29 @@ void nbody_kicks(PhaseState p[], double dt)
 double corr_Chambers,coeffb1,coeffb2,coeffa1,coeffa2,TOa1,TOa2,TOb1,TOb2,alpha,beta,btil1,btil2,atil1,atil2,ssq,corr_alpha,corr_beta,FOa1,FOa2,FOa3,FOa4,FOb1,FOb2,FOb3,FOb4,SOa1,SOa2,SOa3,SOa4,SOa5,SOa6,SOb1,SOb2,SOb3,SOb4,SOb5,SOb6;
 
 
-void real_to_mapTO(PhaseState rp[], PhaseState p[])
+status_t real_to_mapTO(PhaseState rp[], PhaseState p[])
 {
+    status_t status;
+    copy_system(rp, p);
 
-  void Z(PhaseState p[], double a, double b);
-  void copy_system(PhaseState p1[], PhaseState p2[]);
+    check_status(Z(p, TOa2, TOb2));
+    check_status(Z(p,  TOa1, TOb1));
 
-  copy_system(rp, p);
-
-  Z(p, TOa2, TOb2);
-  Z(p,  TOa1, TOb1);
-
+    return STATUS_OK;
 }
 
 
-void map_to_realTO(PhaseState p[], PhaseState rp[])
+status_t map_to_realTO(PhaseState p[], PhaseState rp[])
 {
+    status_t status;
 
-  void Z(PhaseState p[],  double a, double b);
-  void copy_system(PhaseState p1[], PhaseState p2[]);
+    copy_system(p,rp);
 
-  copy_system(p,rp);
+    check_status(Z(rp,  TOa1, -TOb1));
+    check_status(Z(rp,  TOa2, -TOb2));
 
-  Z(rp,  TOa1, -TOb1);
-  Z(rp,  TOa2, -TOb2);
- }
+    return STATUS_OK;
+}
 
 void compute_corrector_coefficientsTO(double dt)
 {
@@ -405,34 +403,42 @@ void compute_corrector_coefficientsTO(double dt)
 
 
 
-void A(PhaseState p[],  double dt)
+status_t A(PhaseState p[],  double dt)
 {
   PhaseState tmp;
   int planet;
-  void copy_state(PhaseState *s1,  PhaseState *s2);
 
+  status_t status;
   for(planet=0; planet<n_planets; planet++) {
-    kepler_step(kc[planet], dt, &p[planet], &tmp,planet);
-    copy_state(&tmp, &p[planet]);
+      check_status(kepler_step(kc[planet], dt, &p[planet], &tmp,planet));
+      copy_state(&tmp, &p[planet]);
   }
+  return STATUS_OK;
 }
 
-void B(PhaseState p[], double dt)
+status_t B(PhaseState p[], double dt)
 {
   nbody_kicks(p, dt);  
+  return STATUS_OK;
 }
 
-void C(PhaseState p[], double a, double b)
+status_t C(PhaseState p[], double a, double b)
 {
-  A(p, -a);
-  B(p, b);
-  A(p, a);
+    status_t status;
+
+    check_status(A(p, -a));
+    check_status(B(p, b));
+    check_status(A(p, a));
+    return STATUS_OK;
 }
 
-void Z(PhaseState p[], double a, double b)
+status_t Z(PhaseState p[], double a, double b)
 {
-  C(p, -a, -b);
-  C(p, a, b);
+    status_t status;
+
+    check_status(C(p, -a, -b));
+    check_status(C(p, a, b));
+    return STATUS_OK;
 }
 
 void copy_state(PhaseState *s1,  PhaseState *s2)

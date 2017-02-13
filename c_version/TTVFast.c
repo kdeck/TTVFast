@@ -3,6 +3,8 @@
 
 // Main TTVFast file, which takes in the initial conditions, masses, G, timestep, t0, total amount of time, number of planets, number of RV measurements, size of Transit structure, and the RV and Transit structures. This is where the integration is formed & the transit times, rsky & vsky at transit, and RV at an observation time are calculated. Note that things called "helio" or "heliocentric" really should be "astrocentric". 
 
+#include "ttv_errors.h"
+
 #define PI 3.14159265358979323846
 #define TWOPI 6.283185307179586476925287
 #define MAX_N_PLANETS 9
@@ -50,20 +52,53 @@ double machine_epsilon;
 #include "kepcart2.c"
 #include "machine-epsilon.c"
 
-void TTVFast(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag)
+/* Function declarations */
+status_t read_jacobi_planet_elements(double *params);
+status_t read_helio_planet_elements(double *params);
+status_t read_helio_cartesian_params(double *params);
+void jacobi_heliocentric(PhaseState *jacobi, PhaseState *helio, double GMsun, double *GM);
+double compute_RV(PhaseState *ps);
+double compute_deriv(PhaseState ps,int planet);
+status_t TTVFast_main(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag);
+
+/* Previous entry point, which handles the error messages */
+void TTVFast(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag) {
+    status_t status = TTVFast_main(params, dt, Time, total, n_plan, transit, RV_struct, nRV, n_events, input_flag);
+    switch (status) {
+        case STATUS_OK:
+            break;
+        case STATUS_ARGUMENT_ERROR:
+            fprintf(stderr, "Input flag must be 0, 1 or 2.\n");
+            exit(STATUS_ARGUMENT_ERROR);
+        case STATUS_MEMORY_ERROR:
+            fprintf(stderr, "Not enough memory allocated for Transit structure: "
+                    "more events triggering as transits than expected. "
+                    "Possibily indicative of larger problem.\n");
+            exit(STATUS_MEMORY_ERROR);
+        case STATUS_HYPERBOLIC_ORBIT:
+            fprintf(stderr, "Hyperbolic orbit.\n");
+            exit(STATUS_HYPERBOLIC_ORBIT);
+        case STATUS_TOO_MANY_PLANETS:
+            fprintf(stderr, "Too many planets.\n");
+            exit(STATUS_TOO_MANY_PLANETS);
+        case STATUS_NON_CONVERGING:
+            fprintf(stderr, "Kepler step not converging in MAX_ITER. "
+                    "Likely need a smaller dt.\n");
+            exit(STATUS_NON_CONVERGING);
+        /* No default case, ensuring that all exit states are handled */
+    }
+}
+
+status_t TTVFast_main(double *params,double dt, double Time, double total,int n_plan,CalcTransit *transit,CalcRV *RV_struct, int nRV, int n_events, int input_flag)
 {
   n_planets=n_plan;
-  int  planet;
-  int i, j;
-  j=0;
-  void jacobi_heliocentric(PhaseState *jacobi, PhaseState *helio, double GMsun, double *GM);
-  double dot0,dot1,dot2,rskyA,rskyB,vprojA,vprojB,rsky,vproj,velocity,new_dt;
-  double compute_RV(PhaseState *ps);
-  double compute_deriv(PhaseState ps,int planet);
+  int i, j = 0;
+  double dot1,dot2,rskyA,rskyB,vprojA,vprojB,rsky,vproj,velocity,new_dt;
   int RV_count = 0;
   int k=0;
   double deriv;
   double  dt2 = dt/2.0;
+  status_t status;
 
   if(RV_struct !=NULL){
     RV_count = nRV;
@@ -71,17 +106,16 @@ void TTVFast(double *params,double dt, double Time, double total,int n_plan,Calc
 
   machine_epsilon = determine_machine_epsilon();
   if(input_flag ==0){
-    read_jacobi_planet_elements(params);
+    check_status(read_jacobi_planet_elements(params));
   }
   if(input_flag ==1){
-    read_helio_planet_elements(params);
+    check_status(read_helio_planet_elements(params));
   }
   if(input_flag ==2){
-    read_helio_cartesian_params(params);
+    check_status(read_helio_cartesian_params(params));
   }
   if(input_flag !=0 && input_flag !=1 && input_flag !=2){
-    printf("Input flag must be 0,1, or 2. \n");
-    exit(-1);
+      return STATUS_ARGUMENT_ERROR;
   }
   
   copy_system(p, rp);
@@ -105,23 +139,23 @@ void TTVFast(double *params,double dt, double Time, double total,int n_plan,Calc
 
     if(j <RV_count){
       RVTime = Time+dt2;
+
+      while(RVTime>(RV_struct+j)->time && RVTime-dt<(RV_struct+j)->time){ /* LMW 2016 Nov: This conditional has been updated from "if" --> "while" to account for multiple RV measurements in a single time step */
+    if(RVTime-(RV_struct+j)->time > (RV_struct+j)->time-(RVTime-dt)){
+      copy_system(p_tmp,p_RV);
+      new_dt= (RV_struct+j)->time-(RVTime-dt);
+      A(p_RV,new_dt);
+      velocity = compute_RV(p_RV);
+      (RV_struct+j)->RV =velocity;
       
-      if(RVTime>(RV_struct+j)->time && RVTime-dt<(RV_struct+j)->time){
-	if(RVTime-(RV_struct+j)->time > (RV_struct+j)->time-(RVTime-dt)){
-	  copy_system(p_tmp,p_RV);
-	  new_dt= (RV_struct+j)->time-(RVTime-dt);
-	  A(p_RV,new_dt);
-	  velocity = compute_RV(p_RV);
-	  (RV_struct+j)->RV =velocity;
-	  
-	}else{
-	  copy_system(p,p_RV);
-	  new_dt= (RV_struct+j)->time-RVTime;
-	  A(p_RV,new_dt);
-	  velocity = compute_RV(p_RV);
-	  (RV_struct+j)->RV =velocity;
-	}
-	j++;
+    }else{
+      copy_system(p,p_RV);
+      new_dt= (RV_struct+j)->time-RVTime;
+      A(p_RV,new_dt);
+      velocity = compute_RV(p_RV);
+      (RV_struct+j)->RV =velocity;
+    }
+    j++;
       }
     }
     
@@ -228,24 +262,22 @@ void TTVFast(double *params,double dt, double Time, double total,int n_plan,Calc
 	  count[tplanet]++;
 	  k++;
 	}else{
-	  printf("Not enough memory allocated for Transit structure: more events triggering as transits than expected. Possibily indicative of larger problem.\n");
-	  exit(-1);
+        return STATUS_MEMORY_ERROR;
 	}
       }
       
       prev_dot[i]=curr_dot[i];      
     }
   }
+  return STATUS_OK;
 }
 
 
 
 
-read_jacobi_planet_elements(params)
-     double *params;
+status_t read_jacobi_planet_elements(double *params)
 {
   int planet;
-  double solar_mass, GMplanet;
   double Getatmp, Getatmp0;
   double period,e,incl,longnode,argperi,MeanAnom;
   double a;
@@ -288,19 +320,18 @@ read_jacobi_planet_elements(params)
     planet += 1;
 
     if(planet > MAX_N_PLANETS) {
-      printf("too many planets: %d\n", planet);
-      exit(-1);
+        return STATUS_TOO_MANY_PLANETS;
     }
   }
+
+  return STATUS_OK;
 }
 
 
 
-read_helio_planet_elements(params)
-     double *params;
+status_t read_helio_planet_elements(double *params)
 {
   int planet;
-  double solar_mass, GMplanet;
   double Getatmp, Getatmp0;
   double period,e,incl,longnode,argperi,MeanAnom;
   double a;
@@ -345,20 +376,18 @@ read_helio_planet_elements(params)
     planet += 1;
 
     if(planet > MAX_N_PLANETS) {
-      printf("too many planets: %d\n", planet);
-      exit(-1);
+        return STATUS_TOO_MANY_PLANETS;
     }
   }
   heliocentric_jacobi(helio,p,GMsun,GM);
 
+  return STATUS_OK;
 }
 
 
-read_helio_cartesian_params(params)
-double *params;
+status_t read_helio_cartesian_params(double *params)
 {
   int planet;
-  double solar_mass, GMplanet;
   double Getatmp, Getatmp0;
   double a,r,vs,u;
   void heliocentric_jacobi(PhaseState *helio, PhaseState *jacobi, double GMsun, double *GM);
@@ -399,11 +428,12 @@ double *params;
     planet += 1;
 
     if(planet > MAX_N_PLANETS) {
-      printf("too many planets: %d\n", planet);
-      exit(-1);
+        return STATUS_TOO_MANY_PLANETS;
     }
   }
   heliocentric_jacobi(helio,p,GMsun,GM);
+
+  return STATUS_OK;
 }
 
 
